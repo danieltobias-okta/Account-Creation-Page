@@ -68,18 +68,7 @@
                         method: "POST",
                         body: JSON.stringify(data)
                     }).then((res) => {
-        
-                            data = {
-                                "username": $("#exampleInputEmail1").val(),
-                                "password": $("#exampleInputEmail2").val()
-                            }
-                            //this fetch is useless, you dont need to authn. I just added it for fun
-                            fetch("https://tobias.okta.com/api/v1/authn", {method : "POST", body: JSON.stringify(data), headers: {'Content-Type': 'application/json', 'Accept':'application/json'}}).then( (r) => {
-                                r.json().then((body) => {
-                                    console.log(body);
-                                    window.location = window.location.origin
-                                });
-                            });
+                            window.location = window.location.origin;
                     }
                     );
                 }
