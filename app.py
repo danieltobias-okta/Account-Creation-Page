@@ -29,17 +29,18 @@ def verifysms():
         f"/api/v1/users/{payload['id']}/factors/{payload['factorId']}/lifecycle/activate"
     headers = {
         'Accept': 'application/json',
-        'Content-Type': 'application/json',
         'Authorization': 'SSWS ' + api_key,
     }
+    session = requests.Session()
+    session.headers.update(headers)
     body = {
         "passCode": payload['passCode']
     }
-    r = requests.post(request_url, headers=headers, data=json.dumps(body))
+    r = session.post(request_url, json=body)
 
     req_url = url + \
         f"/api/v1/users/{payload['id']}/lifecycle/activate?sendEmail=false"
-    r = requests.post(req_url, headers=headers, data={})
+    r = session.post(req_url)
 
     req_url = url + f"/api/v1/users/{payload['id']}/factors?activate=true"
     data = {
@@ -49,7 +50,7 @@ def verifysms():
             "phoneNumber": payload['phone']
         }
     }
-    r = requests.post(req_url, data = json.dumps(data), headers = headers)
+    r = session.post(req_url, json=data)
     return '', 204
 
 
@@ -74,10 +75,11 @@ def user():
 
     headers = {
         'Accept': 'application/json',
-        'Content-Type': 'application/json',
         'Authorization': 'SSWS ' + api_key,
     }
-    res = requests.post(request_url, data=json.dumps(data), headers=headers)
+    session = requests.Session()
+    session.headers.update(headers)
+    res = session.post(request_url, json=data)
     if int(res.status_code) == 200:
         id = res.json()['id']
         request_url = url + f"/api/v1/users/{id}/factors"
@@ -88,8 +90,7 @@ def user():
                 "phoneNumber": str(payload['phone'])
             }
         }
-        res = requests.post(
-            request_url, data=json.dumps(data), headers=headers)
+        res = session.post(request_url, json=data)
 
     return json.dumps({"id": str(id), "factorId": res.json()['id']}), 200
 
