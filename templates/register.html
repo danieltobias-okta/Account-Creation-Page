@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+
+<head>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+        integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous" />
+
+    <script>
+        $(document).keyup( function(e) {
+            if (e.keyCode == 13) {
+                nextButton();
+            }
+        });
+
+        $(document).ready(function () {
+            $("#exampleInputEmail1").keyup(function () {
+                var email = $("#exampleInputEmail1").val();
+                if (email.endsWith(".com") || email.endsWith(".net")) {
+                    console.log("got an email!");
+                    $("#nxt").addClass("btn btn-success");
+                    $("#nxt").prop("disabled", false);
+                } else {
+                    $("#nxt").removeClass("btn btn-success");
+                    $("#nxt").addClass("btn btn-secondary");
+                    $("#nxt").prop("disabled", true);
+                }
+            });
+
+            $("#exampleInputEmail2").keyup(function () {
+                if (
+                    $("#exampleInputEmail2").val().length >= 8 &&
+                    /\d/.test($("#exampleInputEmail2").val())
+                ) {
+                    $("#nxt").prop("disabled", false);
+                    $("#nxt").addClass("btn btn-success");
+                } else {
+                    $("#nxt").removeClass("btn btn-success");
+                    $("#nxt").addClass("btn btn-secondary");
+                    $("#nxt").prop("disabled", true);
+                }
+            });
+
+            $("#exampleInputEmail3").keyup(function () {
+                if ($("#exampleInputEmail3").val().length == 10) {
+                    $("#nxt").prop("disabled", false);
+                    $("#nxt").addClass("btn btn-success");
+                } else {
+                    $("#nxt").removeClass("btn btn-success");
+                    $("#nxt").addClass("btn btn-secondary");
+                    $("#nxt").prop("disabled", true);
+                }
+            });
+
+            $("#exampleInputEmail4").keyup(function () {
+                if ($("#exampleInputEmail4").val().length == 6) {
+                    let data = {
+                        "id" : localStorage.getItem("id"),
+                        "factorId" : localStorage.getItem("factorId"),
+                        "passCode" : $("#exampleInputEmail4").val(),
+                        "phone": $("#exampleInputEmail3").val()
+                    };
+                    $("#spinner").show();
+                    $("#nextbtn").hide();
+                    $("#exampleInputEmail4").prop("disabled",true);
+                    // $("#codeGroup").fadeOut();
+                    fetch(window.location.origin + "/verifysms", {
+                        method: "POST",
+                        body: JSON.stringify(data)
+                    }).then((res) => {
+        
+                            data = {
+                                "username": $("#exampleInputEmail1").val(),
+                                "password": $("#exampleInputEmail2").val()
+                            }
+                            //this fetch is useless, you dont need to authn. I just added it for fun
+                            fetch("https://tobias.okta.com/api/v1/authn", {method : "POST", body: JSON.stringify(data), headers: {'Content-Type': 'application/json', 'Accept':'application/json'}}).then( (r) => {
+                                r.json().then((body) => {
+                                    console.log(body);
+                                    window.location = window.location.origin
+                                });
+                            });
+                    }
+                    );
+                }
+            });
+        });
+        function nextButton() {
+            let state = $("#emailGroup").is(":hidden");
+            let state2 = $("#pwGroup").is(":hidden");
+            let state3 = $("#mfaGroup").is(":hidden");
+            if (!state) {
+                $("#emailGroup").hide();
+                $("#pwGroup").fadeIn();
+                $("#nxt").removeClass("btn btn-success");
+                $("#nxt").prop("disabled", true);
+                $("#nxt").addClass("btn btn-secondary");
+            } else if (!state2) {
+                $("#pwGroup").hide();
+                $("#nxt").prop("disabled", true);
+                $("#nxt").removeClass("btn btn-success");
+                $("#nxt").addClass("btn btn-secondary");
+                $("#mfaGroup").fadeIn();
+            } else if (!state3) {
+                $("#mfaGroup").hide();
+                $("#nxt").prop("disabled", true);
+                $("#nxt").removeClass("btn btn-success");
+                $("#nxt").addClass("btn btn-secondary");
+                let data = {
+                    login: $("#exampleInputEmail1").val(),
+                    password: $("#exampleInputEmail2").val(),
+                    phone: $("#exampleInputEmail3").val(),
+                };
+
+                fetch(window.location.origin + "/user", {
+                    method: "POST",
+                    body: JSON.stringify(data),
+                }).then((res) => {
+                    res.json().then((data) => {
+                        localStorage.setItem("id", data.id);
+                        localStorage.setItem("factorId", data.factorId)
+                    });
+                });
+                $("#codeGroup").fadeIn();
+            }
+        }
+    </script>
+</head>
+
+<body>
+    <center>
+        <h1>Register for {{ org }}</h1>
+        <div id="emailGroup">
+            <div class="form-group">
+                <label for="exampleInputEmail1">Email address</label>
+                <input type="email" class="form-control" autocomplete="off" id="exampleInputEmail1" aria-describedby="emailHelp"
+                    placeholder="Enter email" style="width: 15%" />
+                <small id="emailHelp" class="form-text text-muted">We'll never share your email with anyone
+                    else.</small>
+            </div>
+        </div>
+        <div id="pwGroup" style="display: none">
+            <div class="form-group">
+                <label for="exampleInputEmail2">Choose a password</label>
+                <input type="password" class="form-control" autocomplete="off" id="exampleInputEmail2" aria-describedby="emailHelp"
+                    placeholder="Password" style="width: 15%" />
+                <small id="emailHelp" class="form-text text-muted">Please include a number, a symbol, and an uppercase
+                    character.</small>
+            </div>
+        </div>
+        <div id="mfaGroup" style="display: none">
+            <div class="form-group">
+                <label for="exampleInputEmail3">Verify your phone number.</label>
+                <input type="text" class="form-control" autocomplete="off" id="exampleInputEmail3" aria-describedby="emailHelp"
+                    placeholder="1234567890" style="width: 15%" />
+                <small id="emailHelp" class="form-text text-muted">Please type your full 10 digit phone number.</small>
+            </div>
+        </div>
+        
+
+        <div id="codeGroup" style="display: none">
+            <div class="form-group">
+                <label for="exampleInputEmail4">Verify your code.</label>
+                <input type="text" class="form-control" autocomplete="off" id="exampleInputEmail4" aria-describedby="emailHelp"
+                    placeholder="123456" style="width: 15%" />
+                <small id="emailHelp" class="form-text text-muted">Input your 6-digit code.</small>
+            </div>
+        </div>
+        <div id="nextbtn">
+            <button type="button" id="nxt" class="btn btn-secondary" disabled onClick="nextButton();">
+                Next
+            </button>
+        </div>
+        <div id ="spinner" style = "display: none;">
+        <div class="spinner-border text-success" role="status">
+            <span class="sr-only">Loading...</span>
+          </div>
+        </div>
+    </center>
+</body>
